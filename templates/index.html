@@ -74,11 +74,27 @@
             color: #666;
             margin-bottom: 5px;
         }
+        .network-navigation {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+        .nav-button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .nav-button:hover {
+            background: #e0e0e0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>IPv6 Subnet Visualizer</h1>
+        <h1>IPv6 Subnet Visualizer by aibix0001</h1>
         <div class="input-group">
             <input type="text" id="ipv6Input" placeholder="Enter IPv6 address" 
                    value="{{ default_ip }}" pattern="^[0-9a-fA-F:]+$">
@@ -95,7 +111,7 @@
         </div>
         
         <div class="binary-section">
-            <div class="binary-label">Network bits (48-63):</div>
+            <div class="binary-label">Prefix bits (48-63):</div>
             <div id="networkBinary"></div>
         </div>
         
@@ -112,6 +128,7 @@
         const prefixSlider = document.getElementById('prefixSlider');
         const prefixValue = document.getElementById('prefixValue');
         let timeout = null;
+        let currentNetworkIndex = 0;
 
         function displayBitIndexes() {
             const container = document.getElementById('bitIndexes');
@@ -173,19 +190,36 @@
             }
         }
 
+        function displayNetworkInfo(data) {
+            document.getElementById('networkInfo').innerHTML = `
+                <p>
+                    Prefix: ${data.network}
+                    <span class="network-navigation">
+                        <button class="nav-button" onclick="navigateNetwork(-1)">←</button>
+                        <button class="nav-button" onclick="navigateNetwork(1)">→</button>
+                    </span>
+                </p>
+                <p>Last address: ${data.last_address}</p>
+            `;
+        }
+
+        function navigateNetwork(direction) {
+            currentNetworkIndex += direction;
+            if (currentNetworkIndex < 0) currentNetworkIndex = 0;
+            updateVisualizer();
+        }
+
         function updateVisualizer() {
             const ipv6 = ipv6Input.value || "{{ default_ip }}";
             const prefix = prefixSlider.value;
             
-            fetch(`/api/parse/${encodeURIComponent(ipv6)}/${prefix}`)
+            fetch(`/api/parse/${encodeURIComponent(ipv6)}/${prefix}/${currentNetworkIndex}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
                         displayBinaries(data.binary, data.last_addr_binary, data.prefix_len);
-                        document.getElementById('networkInfo').innerHTML = `
-                            <p>Network: ${data.network}</p>
-                            <p>Last address: ${data.last_address}</p>
-                        `;
+                        displayNetworkInfo(data);
+                        currentNetworkIndex = data.network_index;
                     } else {
                         document.getElementById('networkBinary').innerHTML = '';
                         document.getElementById('lastBinary').innerHTML = '';
@@ -201,13 +235,16 @@
         // Initial update
         updateVisualizer();
 
+        // Update existing event listeners
         prefixSlider.oninput = function() {
             prefixValue.textContent = this.value;
+            currentNetworkIndex = 0;  // Reset network index when prefix changes
             updateVisualizer();
         };
 
         ipv6Input.addEventListener('input', () => {
             clearTimeout(timeout);
+            currentNetworkIndex = 0;  // Reset network index when address changes
             timeout = setTimeout(updateVisualizer, 500);
         });
     </script>
