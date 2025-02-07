@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPv6 Prefix Visualizer</title>
+    <title>IPv6 Visualizer</title>
     <style>
         .bit {
             display: inline-block;
@@ -24,54 +24,134 @@
         .controls {
             margin: 20px 0;
         }
+        .slider {
+            width: 300px;
+            margin: 10px 0;
+        }
+        .bit-box {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #333;
+            text-align: center;
+            margin: 2px;
+            line-height: 30px;
+            background-color: #f0f0f0;
+            font-family: monospace;
+        }
+        .container {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        #ipv6Input {
+            padding: 5px;
+            width: 300px;
+            font-family: monospace;
+        }
+        .bit-active {
+            background-color: #a0e8a0;
+        }
+        .bit-inactive {
+            background-color: #f0f0f0;
+            color: #999;
+        }
+        .bit-index {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            width: 30px;
+            display: inline-block;
+            margin: 2px;
+        }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <input type="text" id="ipv6Input" placeholder="Enter IPv6 address" value="2001:db8::1">
-        <input type="range" id="prefixLength" min="0" max="128" value="64">
-        <span id="prefixValue">64</span>
-        <button onclick="updateVisualization()">Visualize</button>
+    <div class="container">
+        <h1>IPv6 Subnet Visualizer</h1>
+        <div class="input-group">
+            <input type="text" id="ipv6Input" placeholder="Enter IPv6 address" 
+                   value="{{ default_ip }}" pattern="^[0-9a-fA-F:]+$">
+        </div>
+        <div class="input-group">
+            <label for="prefixSlider">Prefix Length: <span id="prefixValue">{{ default_prefix }}</span></label>
+            <br>
+            <input type="range" id="prefixSlider" min="48" max="64" 
+                   value="{{ default_prefix }}" class="slider">
+        </div>
+        <div>
+            <div id="bitIndexes"></div>
+            <div id="binaryDisplay"></div>
+        </div>
+        <div id="networkInfo"></div>
     </div>
-    <div class="binary-view" id="binaryView"></div>
-    <div id="networkInfo"></div>
 
     <script>
-        function updateVisualization() {
-            const ipv6 = document.getElementById('ipv6Input').value;
-            const prefix = document.getElementById('prefixLength').value;
+        const ipv6Input = document.getElementById('ipv6Input');
+        const prefixSlider = document.getElementById('prefixSlider');
+        const prefixValue = document.getElementById('prefixValue');
+        let timeout = null;
+
+        function displayBitIndexes() {
+            const container = document.getElementById('bitIndexes');
+            container.innerHTML = '';
+            for (let i = 48; i < 64; i++) {
+                const index = document.createElement('div');
+                index.className = 'bit-index';
+                index.textContent = i;
+                container.appendChild(index);
+            }
+        }
+
+        function displayBinary(binary, prefixLen) {
+            const display = document.getElementById('binaryDisplay');
+            display.innerHTML = '';
+            for (let i = 0; i < binary.length; i++) {
+                const box = document.createElement('div');
+                box.className = `bit-box ${i < (prefixLen - 48) ? 'bit-active' : 'bit-inactive'}`;
+                box.textContent = binary[i];
+                display.appendChild(box);
+            }
+        }
+
+        function updateVisualizer() {
+            const ipv6 = ipv6Input.value || "{{ default_ip }}";
+            const prefix = prefixSlider.value;
             
-            fetch(`/api/parse/${ipv6}/${prefix}`)
+            fetch(`/api/parse/${encodeURIComponent(ipv6)}/${prefix}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'error') {
-                        alert(data.message);
-                        return;
+                    if (data.status === 'success') {
+                        displayBinary(data.binary, data.prefix_len);
+                        document.getElementById('networkInfo').innerHTML = `
+                            <p>Network: ${data.network}</p>
+                            <p>Broadcast: ${data.broadcast}</p>
+                        `;
+                    } else {
+                        document.getElementById('binaryDisplay').innerHTML = 
+                            `<p style="color: red">Error: ${data.message}</p>`;
+                        document.getElementById('networkInfo').innerHTML = '';
                     }
-                    
-                    const binaryView = document.getElementById('binaryView');
-                    binaryView.innerHTML = '';
-                    
-                    for (let i = 0; i < data.binary.length; i++) {
-                        const bit = document.createElement('span');
-                        bit.className = `bit ${i < prefix ? 'prefix-bit' : 'value-bit'}`;
-                        bit.textContent = data.binary[i];
-                        binaryView.appendChild(bit);
-                    }
-                    
-                    document.getElementById('networkInfo').innerHTML = `
-                        <p>Network Address: ${data.network}</p>
-                        <p>Broadcast Address: ${data.broadcast}</p>
-                    `;
                 });
         }
 
-        document.getElementById('prefixLength').addEventListener('input', function() {
-            document.getElementById('prefixValue').textContent = this.value;
-        });
+        // Initialize bit indexes
+        displayBitIndexes();
 
-        // Initial visualization
-        updateVisualization();
+        // Initial update
+        updateVisualizer();
+
+        prefixSlider.oninput = function() {
+            prefixValue.textContent = this.value;
+            updateVisualizer();
+        };
+
+        ipv6Input.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(updateVisualizer, 500);
+        });
     </script>
 </body>
 </html>
