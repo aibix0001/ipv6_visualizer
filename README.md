@@ -42,7 +42,7 @@ The application consists of:
 
 3. Install dependencies:
    ```bash
-   pip install flask ipaddress
+   pip install -r requirements.txt
    ```
 
 ## Usage
