@@ -26,14 +26,34 @@ def parse_ipv6(ipv6_str, prefix_len):
         
         # Convert to binary representation and extract bits 48-64
         binary = format(int(network.network_address), '0128b')
-        relevant_bits = binary[48:64]  # Extract bits 48-64
+        relevant_bits = list(binary[48:64])  # Extract bits 48-64 as list
+        
+        # Change 0s to 1s only in the active prefix range
+        for i in range(prefix_len - 48):
+            if i >= 0 and i < len(relevant_bits):
+                if relevant_bits[i] == '0':
+                    relevant_bits[i] = '1'
+        
+        # Format network and last addresses with full representation
+        network_addr = str(network.network_address).replace('::', ':0000:')
+        while '::' in network_addr:
+            network_addr = network_addr.replace('::', ':0000:')
+        last_addr = str(network.broadcast_address).replace('::', ':0000:')
+        while '::' in last_addr:
+            last_addr = last_addr.replace('::', ':0000:')
+            
+        # Ensure each group has 4 digits
+        network_parts = [f"{int(part, 16):04x}" if part else "0000" 
+                        for part in network_addr.split(':')]
+        last_parts = [f"{int(part, 16):04x}" if part else "0000" 
+                     for part in last_addr.split(':')]
         
         return {
             'status': 'success',
-            'binary': relevant_bits,
+            'binary': ''.join(relevant_bits),
             'prefix_len': prefix_len,
-            'network': str(network.network_address),
-            'broadcast': str(network.broadcast_address)
+            'network': ':'.join(network_parts),
+            'last_address': ':'.join(last_parts)  # Changed from 'broadcast'
         }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
