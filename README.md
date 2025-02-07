@@ -26,3 +26,4 @@ The application consists of:
 - Displays binary representation of relevant bits
 - Indicates network boundaries through color coding
 
+Disclaimer: this project was created with help from github copilot.
