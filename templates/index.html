@@ -66,6 +66,14 @@
             display: inline-block;
             margin: 2px;
         }
+        .binary-section {
+            margin: 20px 0;
+        }
+        .binary-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -85,7 +93,18 @@
             <div id="bitIndexes"></div>
             <div id="binaryDisplay"></div>
         </div>
+        
+        <div class="binary-section">
+            <div class="binary-label">Network bits (48-63):</div>
+            <div id="networkBinary"></div>
+        </div>
+        
         <div id="networkInfo"></div>
+        
+        <div class="binary-section">
+            <div class="binary-label">Last address bits (48-63):</div>
+            <div id="lastBinary"></div>
+        </div>
     </div>
 
     <script>
@@ -105,14 +124,52 @@
             }
         }
 
-        function displayBinary(binary, prefixLen) {
+        function displayBinary(binary, addrBinary, prefixLen) {
             const display = document.getElementById('binaryDisplay');
             display.innerHTML = '';
+            
+            // Network binary display
+            const networkDiv = document.createElement('div');
             for (let i = 0; i < binary.length; i++) {
                 const box = document.createElement('div');
                 box.className = `bit-box ${i < (prefixLen - 48) ? 'bit-active' : 'bit-inactive'}`;
                 box.textContent = binary[i];
-                display.appendChild(box);
+                networkDiv.appendChild(box);
+            }
+            
+            // Original address binary display
+            const addrDiv = document.createElement('div');
+            addrDiv.style.marginTop = '10px';
+            for (let i = 0; i < addrBinary.length; i++) {
+                const box = document.createElement('div');
+                box.className = `bit-box ${i < (prefixLen - 48) ? 'bit-active' : 'bit-inactive'}`;
+                box.textContent = addrBinary[i];
+                addrDiv.appendChild(box);
+            }
+            
+            display.appendChild(networkDiv);
+            display.appendChild(addrDiv);
+        }
+
+        function displayBinaries(networkBits, lastBits, prefixLen) {
+            // Display network binary
+            const networkDisplay = document.getElementById('networkBinary');
+            networkDisplay.innerHTML = '';
+            for (let i = 0; i < networkBits.length; i++) {
+                const box = document.createElement('div');
+                box.className = `bit-box ${i < (prefixLen - 48) ? 'bit-active' : 'bit-inactive'}`;
+                box.textContent = networkBits[i];
+                networkDisplay.appendChild(box);
+            }
+            
+            // Display last address binary
+            const lastDisplay = document.getElementById('lastBinary');
+            lastDisplay.innerHTML = '';
+            for (let i = 0; i < lastBits.length; i++) {
+                const box = document.createElement('div');
+                box.className = `bit-box ${i < (prefixLen - 48) ? 'bit-active' : 'bit-inactive'}`;
+                box.textContent = lastBits[i];
+                lastDisplay.appendChild(box);
             }
         }
 
@@ -124,15 +181,16 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        displayBinary(data.binary, data.prefix_len);
+                        displayBinaries(data.binary, data.last_addr_binary, data.prefix_len);
                         document.getElementById('networkInfo').innerHTML = `
                             <p>Network: ${data.network}</p>
                             <p>Last address: ${data.last_address}</p>
                         `;
                     } else {
-                        document.getElementById('binaryDisplay').innerHTML = 
+                        document.getElementById('networkBinary').innerHTML = '';
+                        document.getElementById('lastBinary').innerHTML = '';
+                        document.getElementById('networkInfo').innerHTML = 
                             `<p style="color: red">Error: ${data.message}</p>`;
-                        document.getElementById('networkInfo').innerHTML = '';
                     }
                 });
         }

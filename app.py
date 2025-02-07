@@ -20,19 +20,21 @@ def parse_ipv6(ipv6_str, prefix_len):
                 'message': 'Prefix length must be between 48 and 64 bits'
             }
 
-        # Validate IPv6 address
+        # Validate IPv6 address and get network
         addr = ipaddress.IPv6Address(ipv6_str or DEFAULT_IPV6)
         network = ipaddress.IPv6Network(f'{addr}/{prefix_len}', strict=False)
         
-        # Convert to binary representation and extract bits 48-64
-        binary = format(int(network.network_address), '0128b')
-        relevant_bits = list(binary[48:64])  # Extract bits 48-64 as list
+        # Get binary representations
+        network_binary = format(int(network.network_address), '0128b')
+        last_addr_binary = format(int(network.broadcast_address), '0128b')
+        relevant_network_bits = list(network_binary[48:64])
+        relevant_last_bits = last_addr_binary[48:64]  # Last address bits
         
         # Change 0s to 1s only in the active prefix range
         for i in range(prefix_len - 48):
-            if i >= 0 and i < len(relevant_bits):
-                if relevant_bits[i] == '0':
-                    relevant_bits[i] = '1'
+            if i >= 0 and i < len(relevant_network_bits):
+                if relevant_network_bits[i] == '0':
+                    relevant_network_bits[i] = '1'
         
         # Format network and last addresses with full representation
         network_addr = str(network.network_address).replace('::', ':0000:')
@@ -50,10 +52,11 @@ def parse_ipv6(ipv6_str, prefix_len):
         
         return {
             'status': 'success',
-            'binary': ''.join(relevant_bits),
+            'binary': ''.join(relevant_network_bits),
+            'last_addr_binary': relevant_last_bits,  # Changed to last address bits
             'prefix_len': prefix_len,
             'network': ':'.join(network_parts),
-            'last_address': ':'.join(last_parts)  # Changed from 'broadcast'
+            'last_address': ':'.join(last_parts)
         }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
