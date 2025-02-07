@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IPv6 Prefix Visualizer</title>
+    <style>
+        .bit {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            margin: 1px;
+            font-family: monospace;
+        }
+        .prefix-bit {
+            background-color: #90EE90;
+        }
+        .value-bit {
+            background-color: #FFB6C1;
+        }
+        .binary-view {
+            margin: 20px 0;
+            word-wrap: break-word;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <input type="text" id="ipv6Input" placeholder="Enter IPv6 address" value="2001:db8::1">
+        <input type="range" id="prefixLength" min="0" max="128" value="64">
+        <span id="prefixValue">64</span>
+        <button onclick="updateVisualization()">Visualize</button>
+    </div>
+    <div class="binary-view" id="binaryView"></div>
+    <div id="networkInfo"></div>
+
+    <script>
+        function updateVisualization() {
+            const ipv6 = document.getElementById('ipv6Input').value;
+            const prefix = document.getElementById('prefixLength').value;
+            
+            fetch(`/api/parse/${ipv6}/${prefix}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        alert(data.message);
+                        return;
+                    }
+                    
+                    const binaryView = document.getElementById('binaryView');
+                    binaryView.innerHTML = '';
+                    
+                    for (let i = 0; i < data.binary.length; i++) {
+                        const bit = document.createElement('span');
+                        bit.className = `bit ${i < prefix ? 'prefix-bit' : 'value-bit'}`;
+                        bit.textContent = data.binary[i];
+                        binaryView.appendChild(bit);
+                    }
+                    
+                    document.getElementById('networkInfo').innerHTML = `
+                        <p>Network Address: ${data.network}</p>
+                        <p>Broadcast Address: ${data.broadcast}</p>
+                    `;
+                });
+        }
+
+        document.getElementById('prefixLength').addEventListener('input', function() {
+            document.getElementById('prefixValue').textContent = this.value;
+        });
+
+        // Initial visualization
+        updateVisualization();
+    </script>
+</body>
+</html>
