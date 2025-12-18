@@ -1,125 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>IPv6 Visualizer by aibix0001</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPv6 Subnet Visualizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        .bit {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            text-align: center;
-            margin: 1px;
-            font-family: monospace;
-        }
-        .prefix-bit {
-            background-color: #90EE90;
-        }
-        .value-bit {
-            background-color: #FFB6C1;
-        }
-        .binary-view {
-            margin: 20px 0;
-            word-wrap: break-word;
-        }
-        .controls {
-            margin: 20px 0;
-        }
-        .slider {
-            width: 300px;
-            margin: 10px 0;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
         }
         .bit-box {
             display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 1px solid #333;
+            width: 35px;
+            height: 35px;
+            border: 2px solid #dee2e6;
             text-align: center;
             margin: 2px;
-            line-height: 30px;
-            background-color: #f0f0f0;
-            font-family: monospace;
-        }
-        .container {
-            margin: 20px;
-            font-family: Arial, sans-serif;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        #ipv6Input {
-            padding: 5px;
-            width: 300px;
-            font-family: monospace;
+            line-height: 31px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
         .bit-active {
-            background-color: #a0e8a0;
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
         }
         .bit-inactive {
-            background-color: #f0f0f0;
-            color: #999;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
         }
         .bit-index {
-            font-size: 10px;
-            color: #666;
+            font-size: 11px;
+            color: #6c757d;
             text-align: center;
-            width: 30px;
+            width: 35px;
             display: inline-block;
             margin: 2px;
+            font-weight: 500;
         }
         .binary-section {
-            margin: 20px 0;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
         }
-        .binary-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .network-navigation {
+        .network-navigation .btn {
+            margin: 0 0.25rem;
+            border-radius: 50px;
+            width: 40px;
+            height: 40px;
             display: inline-flex;
             align-items: center;
-            margin-left: 10px;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
         }
-        .nav-button {
-            padding: 5px 10px;
-            margin: 0 5px;
-            cursor: pointer;
-            background: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 3px;
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        .nav-button:hover {
-            background: #e0e0e0;
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            font-family: 'Courier New', monospace;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .form-range {
+            height: 6px;
+        }
+        .form-range::-webkit-slider-thumb {
+            background: #007bff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+        }
+        .network-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+        .network-info p {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>IPv6 Subnet Visualizer by aibix0001</h1>
-        <div class="input-group">
-            <input type="text" id="ipv6Input" placeholder="Enter IPv6 address" 
-                   value="{{ default_ip }}" pattern="^[0-9a-fA-F:]+$">
-        </div>
-        <div class="input-group">
-            <label for="prefixSlider">Prefix Length: <span id="prefixValue">{{ default_prefix }}</span></label>
-            <br>
-            <input type="range" id="prefixSlider" min="48" max="64" 
-                   value="{{ default_prefix }}" class="slider">
-        </div>
-        <div>
-            <div id="bitIndexes"></div>
-            <div id="binaryDisplay"></div>
-        </div>
-        
-        <div class="binary-section">
-            <div class="binary-label">Prefix bits (48-63):</div>
-            <div id="networkBinary"></div>
-        </div>
-        
-        <div id="networkInfo"></div>
-        
-        <div class="binary-section">
-            <div class="binary-label">Last address bits (48-63):</div>
-            <div id="lastBinary"></div>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card p-4 mb-4">
+                    <div class="card-body">
+                        <h1 class="card-title text-center mb-4 text-primary">IPv6 Subnet Visualizer</h1>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="ipv6Input" class="form-label fw-semibold">IPv6 Address</label>
+                                    <input type="text" class="form-control" id="ipv6Input" placeholder="Enter IPv6 address"
+                                            value="{{ default_ip }}" pattern="^[0-9a-fA-F:]+$">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="prefixSlider" class="form-label fw-semibold">Prefix Length: <span id="prefixValue" class="text-primary fw-bold">{{ default_prefix }}</span></label>
+                                    <input type="range" class="form-range" id="prefixSlider" min="48" max="64"
+                                            value="{{ default_prefix }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">Bit Visualization</h5>
+                            <div id="bitIndexes" class="mb-2"></div>
+                            <div id="binaryDisplay"></div>
+                        </div>
+
+                        <div class="binary-section">
+                            <h6 class="binary-label mb-3">Network Bits (48-63)</h6>
+                            <div id="networkBinary"></div>
+                        </div>
+
+                        <div id="networkInfo" class="network-info"></div>
+
+                        <div class="binary-section">
+                            <h6 class="binary-label mb-3">Last Address Bits (48-63)</h6>
+                            <div id="lastBinary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -192,14 +215,18 @@
 
         function displayNetworkInfo(data) {
             document.getElementById('networkInfo').innerHTML = `
-                <p>
-                    Prefix: ${data.network}
-                    <span class="network-navigation">
-                        <button class="nav-button" onclick="navigateNetwork(-1)">←</button>
-                        <button class="nav-button" onclick="navigateNetwork(1)">→</button>
-                    </span>
-                </p>
-                <p>Last address: ${data.last_address}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Network:</strong> ${data.network}
+                    </div>
+                    <div class="network-navigation">
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="navigateNetwork(-1)">‹</button>
+                        <button class="btn btn-outline-light btn-sm" onclick="navigateNetwork(1)">›</button>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <strong>Last Address:</strong> ${data.last_address}
+                </div>
             `;
         }
 
@@ -248,5 +275,6 @@
             timeout = setTimeout(updateVisualizer, 500);
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
