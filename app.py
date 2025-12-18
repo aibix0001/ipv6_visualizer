@@ -74,6 +74,3 @@ def parse_ipv6(ipv6_str, prefix_len, network_index=0):
         }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
-
-if __name__ == '__main__':
-    app.run(debug=True)
