@@ -10,6 +10,7 @@ A web-based tool for visualizing IPv6 subnet allocations and bit boundaries. Thi
 - Adjustable prefix length (48-64 bits)
 - Network navigation within prefix boundaries
 - Real-time updates as you modify inputs
+- Modern, responsive web interface with Bootstrap styling
 
 ## Technical Details
 
@@ -34,22 +35,21 @@ The application consists of:
    cd ipv6_visualizer
    ```
 
-2. Create and activate a virtual environment:
+2. Install uv (if not already installed):
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-3. Install dependencies:
+3. Sync dependencies:
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 ## Usage
 
 1. Start the Flask application:
    ```bash
-   python app.py
+   uv run python main.py
    ```
 
 2. Open your web browser and navigate to:
@@ -73,9 +73,9 @@ The application consists of:
 ### Visualization
 
 - Shows binary representation of bits 48-63
-- Green background indicates bits within prefix
-- Gray background for bits outside prefix
+- Color-coded bits: active (green) within prefix, inactive (gray) outside
 - Displays full network and last address
+- Responsive design works on desktop and mobile devices
 
 ### Navigation
 
@@ -85,9 +85,9 @@ The application consists of:
 
 ## Dependencies
 
-- Python 3.x
-- Flask
-- ipaddress module
+- Python 3.13+
+- Flask (>=3.0.0)
+- uv (for dependency management)
 
 ## License
 
